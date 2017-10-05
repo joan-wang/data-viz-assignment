@@ -1,6 +1,7 @@
 # Author: Joan Wang
 # Purpose: Exploratory analysis of the DoT FARS data
 
+
 # install pertinent packages
 # install.packages(c('readr', 'haven', 'dplyr', 'tidyr', 'stringr', 'ggplot2'))
 library('readr')
@@ -10,6 +11,7 @@ library('tidyr')
 library('stringr')
 library('ggplot2')
 
+
 # load FARS data
 acc2014 <- read_sas('accident.sas7bdat')
 acc2015 <- read_csv('accident.csv')
@@ -17,6 +19,7 @@ acc2015 <- read_csv('accident.csv')
 ls()
 class(acc2014)
 class(acc2015)
+
 
 # combine two years of FARS data
 acc2014 <- mutate(acc2014, TWAY_ID2=na_if(acc2014$TWAY_ID2, ""))
@@ -43,3 +46,14 @@ count(acc, RUR_URB)
 # There are over 30k NA values for the RUR_URB column of the combined tibble
 # because this column did not exist in acc2014. When the two tibbles were combined
 # using bind_rows(), the 2014 values for that column were filled with NA.
+
+
+# merging on another data source
+fips <- read_csv('fips.csv')
+glimpse(fips)
+
+acc$COUNTY = str_pad(as.character(acc$COUNTY), 3, 'left', 0)
+acc$STATE = str_pad(as.character(acc$STATE), 2, 'left', 0)
+acc <- rename(acc, StateFIPSCode = STATE, CountyFIPSCode = COUNTY)
+
+joined_df <- left_join(acc, fips, by = c('StateFIPSCode', 'CountyFIPSCode'))
