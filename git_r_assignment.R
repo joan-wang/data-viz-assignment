@@ -1,6 +1,7 @@
 # Author: Joan Wang
 # Purpose: Exploratory analysis of the DoT FARS data
 
+# install pertinent packages
 # install.packages(c('readr', 'haven', 'dplyr', 'tidyr', 'stringr', 'ggplot2'))
 library('readr')
 library('haven')
@@ -9,6 +10,36 @@ library('tidyr')
 library('stringr')
 library('ggplot2')
 
+# load FARS data
+acc2014 <- read_sas('accident.sas7bdat')
+acc2015 <- read_csv('accident.csv')
 
-acc2014 <- read_sas()
-acc2015 <- read_csv()
+ls()
+class(acc2014)
+class(acc2015)
+
+# combine two years of FARS data
+acc2014 <- mutate(acc2014, TWAY_ID2=na_if(acc2014$TWAY_ID2, ""))
+table(is.na(acc2014$TWAY_ID2))        
+
+dim(acc2014)
+dim(acc2015)
+all_cols <- c(colnames(acc2014), colnames(acc2015))
+
+print_missing <- function(df){
+  bools <- all_cols %in% colnames(df)
+  falses <- which(!bools) 
+  for (col in falses) {
+    print(all_cols[col])
+  }
+}
+
+print_missing(acc2014) # missing columns: "RUR_URB", "FUNC_SYS", "RD_OWNER"
+print_missing(acc2015) # missing columns: "ROAD_FNC"
+# NOTE: is there a more straightforward way to do this?
+
+acc <- bind_rows(acc2014, acc2015)
+count(acc, RUR_URB)
+# There are over 30k NA values for the RUR_URB column of the combined tibble
+# because this column did not exist in acc2014. When the two tibbles were combined
+# using bind_rows(), the 2014 values for that column were filled with NA.
