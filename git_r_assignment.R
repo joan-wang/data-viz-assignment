@@ -56,4 +56,29 @@ acc$COUNTY = str_pad(as.character(acc$COUNTY), 3, 'left', 0)
 acc$STATE = str_pad(as.character(acc$STATE), 2, 'left', 0)
 acc <- rename(acc, StateFIPSCode = STATE, CountyFIPSCode = COUNTY)
 
-joined_df <- left_join(acc, fips, by = c('StateFIPSCode', 'CountyFIPSCode'))
+joined <- left_join(acc, fips, by = c('StateFIPSCode', 'CountyFIPSCode'))
+
+
+# exploratory data analysis
+agg <- group_by(joined, YEAR, StateName) %>%
+  summarise(TOTAL = sum(FATALS, na.rm=TRUE))
+
+agg_wide <- spread(agg, YEAR, TOTAL) %>%
+  rename(TOTAL_2014 = '2014', TOTAL_2015 = '2015')
+
+agg_wide <- mutate(agg_wide, pct_diff = (TOTAL_2015 - TOTAL_2014)/TOTAL_2014)
+
+agg_wide <- arrange(agg_wide, desc(pct_diff))
+
+agg_wide <- filter(agg_wide, pct_diff > 0.15, StateName != "<NA>")
+
+# rewrite using chain operators
+agg_wide <- group_by(joined, YEAR, StateName) %>%
+  summarise(TOTAL = sum(FATALS, na.rm=TRUE)) %>%
+  spread(YEAR, TOTAL) %>%
+  rename(TOTAL_2014 = '2014', TOTAL_2015 = '2015') %>%
+  mutate(pct_diff = (TOTAL_2015 - TOTAL_2014)/TOTAL_2014) %>%
+  arrange(desc(pct_diff)) %>%
+  filter(pct_diff > 0.15, StateName != "<NA>")
+
+
